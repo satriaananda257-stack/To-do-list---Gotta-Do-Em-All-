@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pokemon Todo List - Gotta Do 'Em All!</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="src/style.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <div class="pokemon-header">
+                <div>
+                    <h1> TO-DO LIST</h1>
+                    <p class="subtitle">Gotta Do 'Em All!</p>
+                </div>
+        </header>
+        
+        <div class="content">
+            <div class="input-section">
+                <div class="input-group">
+                    <input type="text" id="todoInput" placeholder="Apa yang harus dilakukan hari ini?">
+                    <button id="addTodoBtn" class="add-btn">
+                        <i class="fas fa-plus-circle"></i> Tambah Poké-Task
+                    </button>
+                </div>
+                <div id="errorMessage" class="error-message">
+                    Oops! Jangan biarkan input kosong seperti Poké Ball tanpa Pokemon!
+                </div>
+            </div>
+            
+            <div class="filter-buttons">
+                <button class="filter-btn filter-all active" data-filter="all">
+                    <i class="fas fa-bars"></i> Semua Tugas
+                </button>
+                <button class="filter-btn filter-pending" data-filter="pending">
+                    <i class="fas fa-clock"></i> Belum Selesai
+                </button>
+                <button class="filter-btn filter-completed" data-filter="completed">
+                    <i class="fas fa-check-circle"></i> Selesai
+                </button>
+            </div>
+            
+            <div class="stats">
+                <div class="stat-card stat-total">
+                    <div class="stat-icon">
+                        <i class="fas fa-tasks" style="color: var(--pokemon-blue);"></i>
+                    </div>
+                    <div class="stat-value" id="totalTasks">0</div>
+                    <div class="stat-label">Total Poké-Tasks</div>
+                </div>
+                <div class="stat-card stat-completed">
+                    <div class="stat-icon">
+                        <i class="fas fa-check-circle" style="color: var(--type-water);"></i>
+                    </div>
+                    <div class="stat-value" id="completedTasks">0</div>
+                    <div class="stat-label">Tugas Selesai</div>
+                </div>
+                <div class="stat-card stat-pending">
+                    <div class="stat-icon">
+                        <i class="fas fa-clock" style="color: var(--type-fire);"></i>
+                    </div>
+                    <div class="stat-value" id="pendingTasks">0</div>
+                    <div class="stat-label">Tugas Tertunda</div>
+                </div>
+            </div>
+            
+            <div class="todo-list-section">
+                <h2 class="section-title">
+                    <i class="fas fa-list-check"></i> Daftar Poké-Tasks
+                </h2>
+                
+                <ul id="todoList" class="todo-list">
+                    <li class="empty-state">
+                        <div class="pokemon-ball"></div>
+                        <h3>Wow, begitu kosong!</h3>
+                        <p>Tambahkan tugas pertama Anda untuk memulai petualangan!</p>
+                    </li>
+                </ul>
+                
+                <div class="clear-all-section">
+                    <button id="clearAllBtn" class="clear-btn">
+                        <i class="fas fa-trash-can"></i> Hapus Semua Poké-Tasks
+                    </button>
+                </div>
+            </div>
+        </div>
+<div class="bulk-action-buttons">
+    <div class="action-buttons-group">
+        <button id="completeAllBtn" class="action-btn-bulk complete-all">
+            <i class="fas fa-check-double"></i>
+            <span>Selesaikan Semua</span>
+        </button>
+        <button id="resetAllBtn" class="action-btn-bulk reset-all">
+            <i class="fas fa-undo-alt"></i>
+            <span>Reset Status</span>
+        </button>
+    </div>
+</div>
+        <footer>
+            <p>Todo List by A.Satria &copy; 2025 | Gotta Do 'Em All!</p>
+            <p>"Keberhasilan datang dari menyelesaikan satu tugas pada satu waktu." - Manusia hanyalah alat ayanokouji</p>
+        </footer>
+    </div>
+
+    <script src="src/main.ts">
+
+    </script>
+</body>
+</html>
