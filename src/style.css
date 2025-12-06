@@ -702,3 +702,42 @@ footer {
         max-width: 300px;
     }
 }
+.edit-input {
+    width: 100%;
+    padding: 8px 12px;
+    border: 2px solid var(--pokemon-blue);
+    border-radius: 8px;
+    font-size: 14px;
+    background: white;
+    color: #000000;
+    outline: none;
+    transition: border-color 0.3s ease;
+}
+
+.edit-input:focus {
+    border-color: var(--pokemon-yellow);
+    box-shadow: 0 0 0 2px rgba(255, 204, 0, 0.2);
+}
+
+.todo-item.editing {
+    background-color: rgba(255, 255, 255, 0.1);
+    border-color: var(--pokemon-yellow);
+}
+
+.action-btn.save-btn {
+    background-color: var(--pokemon-green);
+}
+
+.action-btn.save-btn:hover {
+    background-color: #4CAF50;
+    transform: translateY(-2px);
+}
+
+.action-btn.cancel-btn {
+    background-color: var(--pokemon-red);
+}
+
+.action-btn.cancel-btn:hover {
+    background-color: #e53935;
+    transform: translateY(-2px);
+}

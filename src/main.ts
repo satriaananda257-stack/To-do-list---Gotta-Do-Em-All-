@@ -12,6 +12,7 @@ class PokemonTodoApp {
     private todos: Todo[] = [];
     private filteredTodos: Todo[] = [];
     private currentFilter: string = 'all';
+    private editingTodoId: number | null = null;
     
     private todoInput!: HTMLInputElement;
     private addTodoBtn!: HTMLButtonElement;
@@ -70,6 +71,7 @@ class PokemonTodoApp {
 
     private setFilter(filter: string): void {
         this.currentFilter = filter;
+        this.editingTodoId = null;
         
         this.filterButtons.forEach(button => {
             const buttonFilter = button.getAttribute('data-filter');
@@ -123,8 +125,52 @@ class PokemonTodoApp {
         this.updateStats();
         this.clearInput();
         this.hideError();
+    }
+
+    private startEditTodo(id: number): void {
+        this.editingTodoId = id;
+        this.renderTodos();
         
-        this.showToast("Poké-Task berhasil ditambahkan!", "success");
+
+        setTimeout(() => {
+            const editInput = document.querySelector(`[data-id="${id}"] .edit-input`) as HTMLInputElement;
+            if (editInput) {
+                editInput.focus();
+                editInput.select();
+            }
+        }, 10);
+    }
+
+    private saveEditTodo(id: number): void {
+        const editInput = document.querySelector(`[data-id="${id}"] .edit-input`) as HTMLInputElement;
+        if (!editInput) return;
+        
+        const newText = editInput.value.trim();
+        
+        if (!newText) {
+            this.showError("Teks tugas tidak boleh kosong!");
+            return;
+        }
+        
+        this.todos = this.todos.map(todo => {
+            if (todo.id === id) {
+                return { ...todo, text: newText };
+            }
+            return todo;
+        });
+        
+        this.editingTodoId = null;
+        this.saveTodos();
+        this.filterTodos();
+        this.renderTodos();
+        this.updateStats();
+        this.hideError();
+    }
+
+    private cancelEditTodo(): void {
+        this.editingTodoId = null;
+        this.renderTodos();
+        this.hideError();
     }
 
     private deleteTodo(id: number): void {
@@ -137,14 +183,11 @@ class PokemonTodoApp {
             this.filterTodos();
             this.renderTodos();
             this.updateStats();
-            
-            this.showToast("Poké-Task berhasil dihapus!", "success");
         }
     }
 
     private clearAllTodos(): void {
         if (this.todos.length === 0) {
-            this.showToast("Tidak ada tugas untuk dihapus!", "warning");
             return;
         }
         
@@ -154,21 +197,17 @@ class PokemonTodoApp {
             this.filterTodos();
             this.renderTodos();
             this.updateStats();
-            
-            this.showToast("Semua Poké-Tasks berhasil dihapus!", "success");
         }
     }
 
     private completeAllTodos(): void {
         if (this.todos.length === 0) {
-            this.showToast("Tidak ada tugas untuk diselesaikan!", "warning");
             return;
         }
         
         const pendingTodos = this.todos.filter(todo => !todo.completed).length;
         
         if (pendingTodos === 0) {
-            this.showToast("Semua tugas sudah selesai!", "info");
             return;
         }
         
@@ -182,22 +221,17 @@ class PokemonTodoApp {
             this.filterTodos();
             this.renderTodos();
             this.updateStats();
-            
-            this.showCompletionAnimation();
-            this.showToast(`Semua ${pendingTodos} tugas berhasil diselesaikan!`, "success");
         }
     }
 
     private resetAllTodos(): void {
         if (this.todos.length === 0) {
-            this.showToast("Tidak ada tugas untuk direset!", "warning");
             return;
         }
         
         const completedTodos = this.todos.filter(todo => todo.completed).length;
         
         if (completedTodos === 0) {
-            this.showToast("Tidak ada tugas yang sudah selesai!", "info");
             return;
         }
         
@@ -211,8 +245,6 @@ class PokemonTodoApp {
             this.filterTodos();
             this.renderTodos();
             this.updateStats();
-            
-            this.showToast(`Status ${completedTodos} tugas berhasil direset!`, "success");
         }
     }
 
@@ -228,12 +260,6 @@ class PokemonTodoApp {
         this.filterTodos();
         this.renderTodos();
         this.updateStats();
-        
-        const updatedTodo = this.todos.find(todo => todo.id === id);
-        if (updatedTodo) {
-            const status = updatedTodo.completed ? "selesai" : "belum selesai";
-            this.showToast(`Tugas diubah menjadi ${status}!`, "info");
-        }
     }
 
     private saveTodos(): void {
@@ -241,7 +267,6 @@ class PokemonTodoApp {
             localStorage.setItem('pokemonTodos', JSON.stringify(this.todos));
         } catch (error) {
             console.error("Gagal menyimpan data ke localStorage:", error);
-            this.showToast("Gagal menyimpan data. Storage mungkin penuh.", "error");
         }
     }
 
@@ -304,27 +329,65 @@ class PokemonTodoApp {
         this.filteredTodos.forEach(todo => {
             const todoItem = document.createElement('li');
             todoItem.className = `todo-item pokemon-type-${todo.type} ${todo.completed ? 'completed' : ''}`;
+            todoItem.setAttribute('data-id', todo.id.toString());
             
-            todoItem.innerHTML = `
-                <div class="todo-content">
-                    <input type="checkbox" class="pokemon-checkbox" ${todo.completed ? 'checked' : ''}>
-                    <span class="todo-text ${todo.completed ? 'completed' : ''}">
-                        ${this.escapeHtml(todo.text)}
+            if (this.editingTodoId === todo.id) {
+                todoItem.innerHTML = `
+                    <div class="todo-content">
+                        <input type="text" class="edit-input" value="${this.escapeHtml(todo.text)}">
                         <span class="type-badge type-${todo.type}">${typeNames[todo.type]}</span>
-                    </span>
-                </div>
-                <div class="todo-actions">
-                    <button class="action-btn delete-btn" data-id="${todo.id}">
-                        <i class="fas fa-trash"></i> Hapus
-                    </button>
-                </div>
-            `;
-            
-            const checkbox = todoItem.querySelector('.pokemon-checkbox') as HTMLInputElement;
-            checkbox.addEventListener('change', () => this.toggleTodoStatus(todo.id));
-            
-            const deleteBtn = todoItem.querySelector('.delete-btn') as HTMLButtonElement;
-            deleteBtn.addEventListener('click', () => this.deleteTodo(todo.id));
+                    </div>
+                    <div class="todo-actions">
+                        <button class="action-btn save-btn" title="Simpan perubahan">
+                            <i class="fas fa-save"></i> Simpan
+                        </button>
+                        <button class="action-btn cancel-btn" title="Batalkan edit">
+                            <i class="fas fa-times"></i> Batal
+                        </button>
+                    </div>
+                `;
+                
+                const saveBtn = todoItem.querySelector('.save-btn') as HTMLButtonElement;
+                const cancelBtn = todoItem.querySelector('.cancel-btn') as HTMLButtonElement;
+                const editInput = todoItem.querySelector('.edit-input') as HTMLInputElement;
+                
+                saveBtn.addEventListener('click', () => this.saveEditTodo(todo.id));
+                cancelBtn.addEventListener('click', () => this.cancelEditTodo());
+                
+                editInput.addEventListener('keypress', (e: KeyboardEvent) => {
+                    if (e.key === 'Enter') {
+                        this.saveEditTodo(todo.id);
+                    } else if (e.key === 'Escape') {
+                        this.cancelEditTodo();
+                    }
+                });
+            } else {
+                todoItem.innerHTML = `
+                    <div class="todo-content">
+                        <input type="checkbox" class="pokemon-checkbox" ${todo.completed ? 'checked' : ''}>
+                        <span class="todo-text ${todo.completed ? 'completed' : ''}">
+                            ${this.escapeHtml(todo.text)}
+                            <span class="type-badge type-${todo.type}">${typeNames[todo.type]}</span>
+                        </span>
+                    </div>
+                    <div class="todo-actions">
+                        <button class="action-btn edit-btn" title="Edit tugas">
+                            <i class="fas fa-edit"></i> Edit
+                        </button>
+                        <button class="action-btn delete-btn" title="Hapus tugas">
+                            <i class="fas fa-trash"></i> Hapus
+                        </button>
+                    </div>
+                `;
+                
+                const checkbox = todoItem.querySelector('.pokemon-checkbox') as HTMLInputElement;
+                const editBtn = todoItem.querySelector('.edit-btn') as HTMLButtonElement;
+                const deleteBtn = todoItem.querySelector('.delete-btn') as HTMLButtonElement;
+                
+                checkbox.addEventListener('change', () => this.toggleTodoStatus(todo.id));
+                editBtn.addEventListener('click', () => this.startEditTodo(todo.id));
+                deleteBtn.addEventListener('click', () => this.deleteTodo(todo.id));
+            }
             
             this.todoList.appendChild(todoItem);
         });
@@ -355,92 +418,6 @@ class PokemonTodoApp {
         }
     }
 
-    private showCompletionAnimation(): void {
-        const animation = document.createElement('div');
-        animation.className = 'completion-animation';
-        animation.innerHTML = `
-            <div class="celebration">
-                <i class="fas fa-trophy"></i>
-                <h3>Selamat!</h3>
-                <p>Semua tugas telah diselesaikan!</p>
-            </div>
-        `;
-        
-        animation.style.cssText = `
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0, 0, 0, 0.7);
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            z-index: 1000;
-            animation: fadeIn 0.3s ease;
-        `;
-        
-        const celebration = animation.querySelector('.celebration') as HTMLDivElement;
-        celebration.style.cssText = `
-            background: linear-gradient(135deg, var(--pokemon-red), var(--pokemon-blue));
-            color: white;
-            padding: 30px;
-            border-radius: 15px;
-            text-align: center;
-            animation: bounceIn 0.5s ease;
-        `;
-        
-        document.body.appendChild(animation);
-        
-        setTimeout(() => {
-            animation.style.animation = 'fadeOut 0.3s ease';
-            setTimeout(() => {
-                if (animation.parentNode) {
-                    document.body.removeChild(animation);
-                }
-            }, 300);
-        }, 2000);
-    }
-
-    private showToast(message: string, type: 'success' | 'warning' | 'error' | 'info' = 'info'): void {
-        const existingToast = document.querySelector('.toast-notification');
-        if (existingToast && existingToast.parentNode) {
-            document.body.removeChild(existingToast);
-        }
-        
-        const toast = document.createElement('div');
-        toast.className = `toast-notification ${type}`;
-        toast.innerHTML = `
-            <i class="fas fa-${this.getToastIcon(type)}"></i>
-            <span>${message}</span>
-        `;
-        
-        document.body.appendChild(toast);
-        
-        setTimeout(() => {
-            toast.classList.add('show');
-        }, 10);
-        
-        setTimeout(() => {
-            toast.classList.remove('show');
-            setTimeout(() => {
-                if (toast.parentNode) {
-                    document.body.removeChild(toast);
-                }
-            }, 300);
-        }, 3000);
-    }
-
-    private getToastIcon(type: string): string {
-        switch (type) {
-            case 'success': return 'check-circle';
-            case 'warning': return 'exclamation-triangle';
-            case 'error': return 'times-circle';
-            case 'info': return 'info-circle';
-            default: return 'info-circle';
-        }
-    }
-
     private showError(message: string): void {
         this.errorMessage.textContent = message;
         this.errorMessage.style.display = 'block';
@@ -459,26 +436,6 @@ class PokemonTodoApp {
         this.todoInput.focus();
     }
 }
-
-const style = document.createElement('style');
-style.textContent = `
-    @keyframes fadeIn {
-        from { opacity: 0; }
-        to { opacity: 1; }
-    }
-    
-    @keyframes fadeOut {
-        from { opacity: 1; }
-        to { opacity: 0; }
-    }
-    
-    @keyframes bounceIn {
-        0% { transform: scale(0.3); }
-        50% { transform: scale(1.05); }
-        100% { transform: scale(1); }
-    }
-`;
-document.head.appendChild(style);
 
 document.addEventListener('DOMContentLoaded', () => {
     new PokemonTodoApp();
